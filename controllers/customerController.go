@@ -5,6 +5,7 @@ import (
 	"FeedbackAPI/models"
 	"FeedbackAPI/repository"
 	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -106,6 +107,26 @@ func (cc *customerController) SignUpCustomer(ctx *fiber.Ctx) error {
 		ID: customer.ID, Name: customer.Name, Token: token})
 }
 
+func (cc *customerController) UpdateCustomer(ctx *fiber.Ctx) error {
+	idParam := ctx.Params("id")
+	id, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.UpdateCustomerResponse{Success: false,
+			Error: err.Error()})
+	}
+
+	customer, err := cc.customerRepo.GetByID(uint(id))
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest)
+	}
+
+	var req models.UpdateCustomerRequest
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(http.StatusUnprocessableEntity)
+	}
+
+}
+
 func (cc *customerController) GetCustomer(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")
 	id, err := strconv.ParseUint(idParam, 10, 32)
@@ -127,12 +148,24 @@ func (cc *customerController) GetCustomer(ctx *fiber.Ctx) error {
 	return ctx.Status(http.StatusOK).JSON(models.GetCustomerResponse{Success: true, Customer: *customer})
 }
 
-func (cc *customerController) UpdateCustomer(ctx *fiber.Ctx) error {
-	return nil
-}
-
 func (cc *customerController) DeleteCustomer(ctx *fiber.Ctx) error {
-	return nil
+	idParam := ctx.Params("id")
+	id, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.DeleteCustomerResponse{Success: false,
+			Error: "invalid customer id"})
+	}
+
+	if err := cc.customerRepo.Delete(uint(id)); err != nil {
+		if errors.Is(err, repository.ErrCustomerNotFound) {
+			return ctx.Status(http.StatusBadRequest).JSON(models.DeleteCustomerResponse{Success: false,
+				Error: err.Error()})
+		}
+		return ctx.Status(http.StatusInternalServerError).JSON(models.DeleteCustomerResponse{Success: false,
+			Error: fmt.Sprintf("failed to delete customer with id: %v", id)})
+	}
+	return ctx.Status(http.StatusOK).JSON(models.DeleteCustomerResponse{Success: true})
+
 }
 
 func (cc *customerController) GetCustomerFeedbacks(ctx *fiber.Ctx) error {

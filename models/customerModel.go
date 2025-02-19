@@ -35,7 +35,20 @@ type SignInCustomerResponse struct {
 	Token   string
 }
 
+type DeleteCustomerResponse struct {
+	Success bool
+	Error   string
+}
+
 type GetCustomerResponse struct {
+	Success  bool
+	Error    string
+	Customer Customer
+}
+
+type UpdateCustomerRequest map[string]interface{}
+
+type UpdateCustomerResponse struct {
 	Success  bool
 	Error    string
 	Customer Customer
