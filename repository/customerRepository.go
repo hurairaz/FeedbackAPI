@@ -14,6 +14,7 @@ type CustomerRepository interface {
 	GetByID(id uint) (*models.Customer, error)
 	Delete(id uint) error
 	Update(id uint, updatedCustomer models.UpdateCustomerRequest) (*models.Customer, error)
+	GetFeedbacks(id uint) ([]models.Feedback, error)
 }
 
 type customerRepository struct {
@@ -70,4 +71,15 @@ func (cr *customerRepository) Update(id uint, updatedCustomer models.UpdateCusto
 
 	customer, err := cr.GetByID(id)
 	return customer, err
+}
+
+func (cr *customerRepository) GetFeedbacks(id uint) ([]models.Feedback, error) {
+	var customer models.Customer
+	if err := cr.db.Preload("Feedbacks").Where("id = ?", id).First(&customer).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrCustomerNotFound
+		}
+		return nil, err
+	}
+	return customer.Feedbacks, nil
 }

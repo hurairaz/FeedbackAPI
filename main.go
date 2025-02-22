@@ -3,6 +3,7 @@ package main
 import (
 	"FeedbackAPI/config"
 	"FeedbackAPI/controllers"
+	"FeedbackAPI/middleware"
 	"FeedbackAPI/repository"
 	"github.com/gofiber/fiber/v2"
 	"log"
@@ -31,7 +32,10 @@ func main() {
 
 	app.Post("/signin", customerController.SignInCustomer)
 	app.Post("/signup", customerController.SignUpCustomer)
-
+	app.Get("/customers/:id", middleware.AuthMiddleware, customerController.GetCustomer)
+	app.Put("/customers/:id", middleware.AuthMiddleware, customerController.UpdateCustomer)
+	app.Get("/customers/:id/feedbacks", middleware.AuthMiddleware, customerController.GetCustomerFeedbacks)
+	app.Delete("/customers/:id", middleware.AuthMiddleware, customerController.DeleteCustomer)
 	_ = app.Listen(":8080")
 
 }

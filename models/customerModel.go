@@ -46,10 +46,19 @@ type GetCustomerResponse struct {
 	Customer Customer
 }
 
-type UpdateCustomerRequest map[string]interface{}
+type UpdateCustomerRequest struct {
+	Name     string `json:"name,omitempty"`
+	Password string `json:"password,omitempty"`
+}
 
 type UpdateCustomerResponse struct {
 	Success  bool
 	Error    string
 	Customer Customer
+}
+
+type GetCustomerFeedbacksResponse struct {
+	Success   bool
+	Error     string
+	Feedbacks []Feedback
 }

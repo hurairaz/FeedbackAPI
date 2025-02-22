@@ -4,11 +4,8 @@ import (
 	"FeedbackAPI/auth"
 	"FeedbackAPI/models"
 	"FeedbackAPI/repository"
-	"errors"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,7 +42,7 @@ func (cc *customerController) SignInCustomer(ctx *fiber.Ctx) error {
 	}
 
 	customer, err := cc.customerRepo.GetByName(req.Name)
-	if err != nil || customer == nil {
+	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(models.SignInCustomerResponse{Success: false,
 			Error: "customer does not exist"})
 	}
@@ -112,19 +109,27 @@ func (cc *customerController) UpdateCustomer(ctx *fiber.Ctx) error {
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(models.UpdateCustomerResponse{Success: false,
-			Error: err.Error()})
+			Error: "invalid customer id"})
 	}
 
-	customer, err := cc.customerRepo.GetByID(uint(id))
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest)
+	if _, err := cc.customerRepo.GetByID(uint(id)); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.UpdateCustomerResponse{Success: false,
+			Error: err.Error()})
 	}
 
 	var req models.UpdateCustomerRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.Status(http.StatusUnprocessableEntity).JSON(models.UpdateCustomerResponse{Success: false,
+			Error: err.Error()})
 	}
 
+	updatedCustomer, err := cc.customerRepo.Update(uint(id), req)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.UpdateCustomerResponse{Success: false,
+			Error: err.Error()})
+	}
+
+	return ctx.Status(http.StatusOK).JSON(models.UpdateCustomerResponse{Success: true, Customer: *updatedCustomer})
 }
 
 func (cc *customerController) GetCustomer(ctx *fiber.Ctx) error {
@@ -137,12 +142,8 @@ func (cc *customerController) GetCustomer(ctx *fiber.Ctx) error {
 
 	customer, err := cc.customerRepo.GetByID(uint(id))
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ctx.Status(http.StatusNotFound).JSON(models.GetCustomerResponse{Success: false,
-				Error: "customer does not exist"})
-		}
-		return ctx.Status(http.StatusInternalServerError).JSON(models.GetCustomerResponse{Success: false,
-			Error: "failed to fetch customer"})
+		return ctx.Status(http.StatusBadRequest).JSON(models.GetCustomerResponse{Success: false,
+			Error: err.Error()})
 	}
 
 	return ctx.Status(http.StatusOK).JSON(models.GetCustomerResponse{Success: true, Customer: *customer})
@@ -157,17 +158,32 @@ func (cc *customerController) DeleteCustomer(ctx *fiber.Ctx) error {
 	}
 
 	if err := cc.customerRepo.Delete(uint(id)); err != nil {
-		if errors.Is(err, repository.ErrCustomerNotFound) {
-			return ctx.Status(http.StatusBadRequest).JSON(models.DeleteCustomerResponse{Success: false,
-				Error: err.Error()})
-		}
 		return ctx.Status(http.StatusInternalServerError).JSON(models.DeleteCustomerResponse{Success: false,
-			Error: fmt.Sprintf("failed to delete customer with id: %v", id)})
+			Error: err.Error()})
 	}
 	return ctx.Status(http.StatusOK).JSON(models.DeleteCustomerResponse{Success: true})
 
 }
 
 func (cc *customerController) GetCustomerFeedbacks(ctx *fiber.Ctx) error {
-	return nil
+	idParam := ctx.Params("id")
+	id, err := strconv.ParseUint(idParam, 10, 32)
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.GetCustomerFeedbacksResponse{Success: false,
+			Error: err.Error()})
+	}
+
+	if _, err := cc.customerRepo.GetByID(uint(id)); err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.GetCustomerFeedbacksResponse{Success: false,
+			Error: err.Error()})
+	}
+
+	feedbacks, err := cc.customerRepo.GetFeedbacks(uint(id))
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(models.GetCustomerFeedbacksResponse{Success: false,
+			Error: err.Error()})
+	}
+
+	return ctx.Status(http.StatusOK).JSON(models.GetCustomerFeedbacksResponse{Success: true,
+		Feedbacks: feedbacks})
 }
