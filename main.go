@@ -25,6 +25,8 @@ func main() {
 
 	customerRepo := repository.NewCustomerRepository(db)
 	customerController := controllers.NewCustomerController(customerRepo)
+	feedbackRepo := repository.NewFeedbackRepository(db)
+	feedbackController := controllers.NewFeedbackController(feedbackRepo)
 
 	app.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusOK).JSON(fiber.Map{"message": "Hello"})
@@ -36,6 +38,10 @@ func main() {
 	app.Put("/customers/:id", middleware.AuthMiddleware, customerController.UpdateCustomer)
 	app.Get("/customers/:id/feedbacks", middleware.AuthMiddleware, customerController.GetCustomerFeedbacks)
 	app.Delete("/customers/:id", middleware.AuthMiddleware, customerController.DeleteCustomer)
+	app.Post("/feedbacks/", feedbackController.CreateFeedback)
+	app.Get("/feedbacks/:id", feedbackController.GetFeedback)
+	app.Put("/feedbacks/:id", feedbackController.UpdateFeedback)
+	app.Delete("/feedbacks/:id", feedbackController.DeleteFeedback)
 	_ = app.Listen(":8080")
 
 }

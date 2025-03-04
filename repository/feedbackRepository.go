@@ -12,7 +12,7 @@ type FeedbackRepository interface {
 	Create(newFeedback *models.Feedback) error
 	GetByID(id uint) (*models.Feedback, error)
 	Delete(id uint) error
-	Update(id uint, updatedCustomer models.UpdateCustomerRequest) (*models.Feedback, error)
+	Update(id uint, updatedCustomer models.UpdateFeedbackRequest) (*models.Feedback, error)
 }
 
 type feedbackRepository struct {
@@ -48,8 +48,8 @@ func (fr *feedbackRepository) Delete(id uint) error {
 	return nil
 }
 
-func (fr *feedbackRepository) Update(id uint, updatedCustomer models.UpdateCustomerRequest) (*models.Feedback, error) {
-	result := fr.db.Model(&models.Feedback{}).Where("id = ?", id).Updates(updatedCustomer)
+func (fr *feedbackRepository) Update(id uint, updatedFeedback models.UpdateFeedbackRequest) (*models.Feedback, error) {
+	result := fr.db.Model(&models.Feedback{}).Where("id = ?", id).Updates(updatedFeedback)
 	if result.Error != nil {
 		return nil, result.Error
 	} else if result.RowsAffected < 1 {

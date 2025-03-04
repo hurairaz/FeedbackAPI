@@ -22,6 +22,11 @@ type CreateFeedbackResponse struct {
 	Comment string
 }
 
+type GetFeedbackResponse struct {
+	Success  bool
+	Error    string
+	Feedback Feedback
+}
 type UpdateFeedbackRequest struct {
 	Rating  float64 `json:"rating,omitempty"`
 	Comment string  `json:"comment,omitempty"`
@@ -31,4 +36,9 @@ type UpdateFeedbackResponse struct {
 	Success  bool
 	Error    string
 	Feedback Feedback
+}
+
+type DeleteFeedbackResponse struct {
+	Success bool
+	Error   string
 }
